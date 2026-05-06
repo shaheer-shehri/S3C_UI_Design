@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>S³C — NUST · UI design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: #EEF1F5; font-family: 'Inter', system-ui, sans-serif; }
+  * { -webkit-font-smoothing: antialiased; }
+  /* Hide WebKit scrollbars inside device frames */
+  .ios-screen::-webkit-scrollbar, .stu-app *::-webkit-scrollbar { width: 0; height: 0; }
+  button { font-family: inherit; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<!-- Tokens FIRST so all subsequent scripts can read window.NUST -->
+<script type="text/babel" src="tokens.jsx"></script>
+<script type="text/babel" src="atoms.jsx"></script>
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="android-frame.jsx"></script>
+<script type="text/babel" src="browser-window.jsx"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="student-screens.jsx"></script>
+<script type="text/babel" src="student-flows.jsx"></script>
+<script type="text/babel" src="staff-screens.jsx"></script>
+<script type="text/babel" src="prototype.jsx"></script>
+
+<script type="text/babel" data-presets="env,react">
+const { useState, useEffect } = React;
+
+// ── Tweaks state (live) ──────────────────────────────────────
+function App() {
+  const [t, setTweak] = useTweaks(window.NUST_DEFAULTS);
+  // mirror to globals so non-react helpers (atoms.jsx) can read
+  window.__nustPrimary = t.primary;
+  window.__nustDark = t.darkMode;
+
+  // Force a re-render of design canvas when colour changes by keying
+  return (
+    <>
+      <TweaksPanel title="Tweaks">
+        <TweakSection label="Brand"/>
+        <TweakColor label="Primary color" value={t.primary}
+          options={['#00548E','#01273E','#FBAF17','#800000','#1B7F50']}
+          onChange={(v) => setTweak('primary', v)}/>
+        <TweakSection label="Theme"/>
+        <TweakToggle label="Dark staff portal" value={t.darkMode}
+          onChange={(v) => setTweak('darkMode', v)}/>
+      </TweaksPanel>
+
+      <Canvas key={t.primary + '-' + t.darkMode} dark={t.darkMode}/>
+    </>
+  );
+}
+
+function Canvas({ dark }) {
+  return (
+    <DesignCanvas
+      title="S³C · NUST — UI design"
+      subtitle="Student mobile app + Navigator portal · Brand colour NUST Blue · Georgia/Inter pairing"
+    >
+      <DCSection id="overview" title="01 · Overview">
+        <DCArtboard id="cover" label="Cover · brand & system" width={1200} height={680}>
+          <CoverArtboard/>
+        </DCArtboard>
+        <DCArtboard id="ios-prototype" label="Student app · iOS · CLICKABLE prototype" width={420} height={870}>
+          <StudentIOSFrame/>
+        </DCArtboard>
+        <DCArtboard id="android-prototype" label="Student app · Android · clickable" width={420} height={870}>
+          <StudentAndroidFrame/>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="onboarding" title="02 · Student · Onboarding">
+        <DCArtboard id="splash" label="Splash" width={390} height={844}>
+          <FrozenIOS><StuSplash/></FrozenIOS>
+        </DCArtboard>
+        <DCArtboard id="login" label="Login" width={390} height={844}>
+          <FrozenIOS><StuLogin/></FrozenIOS>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="home" title="03 · Student · Home & glances">
+        <DCArtboard id="home-screen" label="Home dashboard" width={390} height={844}>
+          <FrozenIOS><StuHome go={()=>{}}/></FrozenIOS>
+        </DCArtboard>
+        <DCArtboard id="notifications" label="Notifications" width={390} height={844}>
+          <FrozenIOS><StuNotifs/></FrozenIOS>
+        </DCArtboard>
+        <DCArtboard id="profile" label="Profile" width={390} height={844}>
+          <FrozenIOS><StuProfile/></FrozenIOS>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="newreq" title="04 · Student · Submit a request">
+        <DCArtboard id="new-picker" label="Type / category picker" width={390} height={844}>
+          <FrozenIOS><StuNewRequest go={()=>{}} back={()=>{}}/></FrozenIOS>
+        </DCArtboard>
+        <DCArtboard id="appointment" label="Appointment flow" width={390} height={844}>
+          <FrozenIOS><StuAppt back={()=>{}} onSubmit={()=>{}}/></FrozenIOS>
+        </DCArtboard>
+        <DCArtboard id="document" label="Document flow" width={390} height={844}>
+          <FrozenIOS><StuDoc back={()=>{}} onSubmit={()=>{}}/></FrozenIOS>
+        </DCArtboard>
+        <DCArtboard id="confirm" label="Confirmation" width={390} height={844}>
+          <FrozenIOS><StuConfirm go={()=>{}}/></FrozenIOS>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="track" title="05 · Student · Track requests">
+        <DCArtboard id="my-requests" label="My requests · list" width={390} height={844}>
+          <FrozenIOS><StuRequests go={()=>{}}/></FrozenIOS>
+        </DCArtboard>
+        <DCArtboard id="detail" label="Request detail · timeline" width={390} height={844}>
+          <FrozenIOS><StuDetail r={NUST_REQUESTS[0]} back={()=>{}}/></FrozenIOS>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="staff-onboarding" title="06 · Staff portal · Login">
+        <DCArtboard id="staff-login" label="Navigator login" width={1280} height={800}>
+          <FrozenWeb><StaffLogin onSignIn={()=>{}}/></FrozenWeb>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="staff-app" title="07 · Staff portal · Clickable workspace">
+        <DCArtboard id="portal-clickable" label="Full portal · clickable (sidebar nav)" width={1280} height={820}>
+          <FrozenWeb><StaffPortal dark={dark}/></FrozenWeb>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="staff-screens" title="08 · Staff portal · Screens">
+        <DCArtboard id="dashboard" label="Dashboard" width={1280} height={820}>
+          <FrozenWeb><StaffPortal dark={dark} startRoute="dashboard"/></FrozenWeb>
+        </DCArtboard>
+        <DCArtboard id="queue" label="Request queue" width={1280} height={820}>
+          <FrozenWeb><StaffPortal dark={dark} startRoute="queue"/></FrozenWeb>
+        </DCArtboard>
+        <DCArtboard id="ticket" label="Ticket detail" width={1280} height={820}>
+          <FrozenWeb><StaffPortal dark={dark} startRoute="ticket"/></FrozenWeb>
+        </DCArtboard>
+        <DCArtboard id="sla" label="SLA monitor" width={1280} height={820}>
+          <FrozenWeb><StaffPortal dark={dark} startRoute="sla"/></FrozenWeb>
+        </DCArtboard>
+        <DCArtboard id="reports" label="Performance / reports" width={1280} height={820}>
+          <FrozenWeb><StaffPortal dark={dark} startRoute="reports"/></FrozenWeb>
+        </DCArtboard>
+        <DCArtboard id="walkin" label="Walk-in entry" width={1280} height={820}>
+          <FrozenWeb><StaffPortal dark={dark} startRoute="walkin"/></FrozenWeb>
+        </DCArtboard>
+        <DCArtboard id="mgmt" label="Management summary (Pro-Rector)" width={1280} height={820}>
+          <FrozenWeb><StaffPortal dark={dark} startRoute="mgmt"/></FrozenWeb>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="system" title="09 · Design system">
+        <DCArtboard id="tokens" label="Brand & tokens" width={1200} height={800}>
+          <TokensArtboard/>
+        </DCArtboard>
+        <DCArtboard id="components" label="Components" width={1200} height={760}>
+          <ComponentsArtboard/>
+        </DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+// Wrap a single iOS screen as a static artboard
+function FrozenIOS({ children }) {
+  return (
+    <IOSDevice width={390} height={844}>
+      <div style={{ position:'relative', width:'100%', height:'100%' }}>{children}</div>
+    </IOSDevice>
+  );
+}
+
+function FrozenWeb({ children }) {
+  return (
+    <ChromeWindow url="navigator.s3c.nust.edu.pk" width={1280} height={820}
+      tabs={[{ title: 'S³C · Navigator portal' }]}>
+      <div style={{ height: 820 - 76, overflow:'hidden' }}>{children}</div>
+    </ChromeWindow>
+  );
+}
+
+// ── Cover artboard ───────────────────────────────────────────
+function CoverArtboard() {
+  const primary = window.getPrimary();
+  return (
+    <div style={{ width:'100%', height:'100%', background:'#FFFFFF', display:'grid', gridTemplateColumns:'1.4fr 1fr', fontFamily: NUST.sans }}>
+      <div style={{ background: primary, color:'#fff', padding: '56px 60px', display:'flex', flexDirection:'column', justifyContent:'space-between', position:'relative', overflow:'hidden' }}>
+        {/* decorative blue rings */}
+        <div style={{ position:'absolute', top:-200, right:-200, width:560, height:560, borderRadius:'50%', border:'1px solid rgba(255,255,255,0.12)' }}/>
+        <div style={{ position:'absolute', top:-120, right:-120, width:400, height:400, borderRadius:'50%', border:'1px solid rgba(255,255,255,0.16)' }}/>
+
+        <div style={{ display:'flex', alignItems:'center', gap: 16 }}>
+          <div style={{ background:'#fff', borderRadius:'50%', padding: 8 }}><NustSeal size={56}/></div>
+          <div>
+            <div style={{ fontSize: 11, opacity: 0.7, letterSpacing: 1.6, textTransform:'uppercase' }}>National University of Sciences &amp; Technology</div>
+            <div style={{ fontFamily: NUST.serif, fontSize: 22, fontWeight: 700, marginTop: 2 }}>Pro-Rector (Academics)</div>
+          </div>
+        </div>
+
+        <div style={{ position:'relative' }}>
+          <div style={{ fontFamily: NUST.serif, fontSize: 76, fontWeight: 700, letterSpacing: -1, lineHeight: 1 }}>
+            <S3CMark color="#fff" size={88}/>
+          </div>
+          <div style={{ fontFamily: NUST.serif, fontSize: 38, fontWeight: 700, lineHeight: 1.15, marginTop: 18, maxWidth: 540 }}>
+            Student Service Support Centre — concept design.
+          </div>
+          <div style={{ marginTop: 18, fontSize: 16, opacity: 0.85, lineHeight: 1.6, maxWidth: 520 }}>
+            A clickable student app and a navigator portal that bring every appointment, document and walk-in request into one university-wide queue.
+          </div>
+        </div>
+
+        <div style={{ display:'flex', gap: 20, fontSize: 11, opacity: 0.7, fontFamily: NUST.mono, letterSpacing: 0.4 }}>
+          <span>v 1.0 · concept</span>
+          <span>·</span>
+          <span>iOS · Android · Web</span>
+          <span>·</span>
+          <span>{new Date().toISOString().slice(0,10)}</span>
+        </div>
+      </div>
+
+      <div style={{ padding: '56px 48px', display:'flex', flexDirection:'column', gap: 24, background: NUST.bg }}>
+        <Section h="What's inside">
+          <Bullet n="01" t="Cover &amp; design system" b="Brand, palette, type, components"/>
+          <Bullet n="02" t="Onboarding" b="Splash, login (NUST ID + Qalam SSO)"/>
+          <Bullet n="03" t="Home &amp; glances" b="LMS / Qalam summaries, alerts"/>
+          <Bullet n="04" t="Submit a request" b="Appointment, document, walk-in"/>
+          <Bullet n="05" t="Track requests" b="List, status timeline, message thread"/>
+          <Bullet n="06–08" t="Navigator portal" b="Login, dashboard, queue, SLA, reports, walk-in, management"/>
+        </Section>
+
+        <div style={{ background: NUST.paper, border: `1px solid ${NUST.line}`, borderRadius: 14, padding: 18 }}>
+          <div style={{ fontFamily: NUST.serif, fontWeight: 700, fontSize: 16, color: NUST.ink }}>How to navigate</div>
+          <ul style={{ margin: '10px 0 0', paddingLeft: 18, fontSize: 13, color: NUST.ink2, lineHeight: 1.7 }}>
+            <li>Drag &amp; pan the canvas. Scroll to zoom.</li>
+            <li>Section <b>01</b> hosts <b>clickable prototypes</b> — tap into them.</li>
+            <li>Open the <b>Tweaks</b> toolbar to swap brand colour and toggle dark portal.</li>
+            <li>Other sections show static artboards for quick handoff to dev/Figma.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Section({ h, children }) {
+  return (
+    <div>
+      <div style={{ fontSize: 11, color: NUST.ink3, letterSpacing: 1.2, textTransform:'uppercase', fontWeight: 700, marginBottom: 12 }}>{h}</div>
+      <div style={{ display:'flex', flexDirection:'column', gap: 10 }}>{children}</div>
+    </div>
+  );
+}
+
+function Bullet({ n, t, b }) {
+  return (
+    <div style={{ display:'flex', gap: 14, alignItems:'baseline' }}>
+      <div style={{ fontFamily: NUST.mono, fontSize: 13, color: window.getPrimary(), fontWeight: 600, width: 40 }}>{n}</div>
+      <div>
+        <div style={{ fontFamily: NUST.serif, fontSize: 16, fontWeight: 700, color: NUST.ink }}>{t}</div>
+        <div style={{ fontSize: 12, color: NUST.ink3 }}>{b}</div>
+      </div>
+    </div>
+  );
+}
+
+// ── Tokens artboard ──────────────────────────────────────────
+function TokensArtboard() {
+  const primary = window.getPrimary();
+  return (
+    <div style={{ padding: 48, display:'grid', gridTemplateColumns:'1fr 1fr', gap: 32, background: NUST.paper, height:'100%', boxSizing:'border-box', fontFamily: NUST.sans }}>
+      <div>
+        <div style={{ fontSize: 11, color: NUST.ink3, letterSpacing: 1.4, textTransform:'uppercase', fontWeight: 700 }}>Design system</div>
+        <h2 style={{ fontFamily: NUST.serif, fontSize: 32, fontWeight: 700, color: NUST.ink, margin: '4px 0 18px' }}>Brand &amp; tokens</h2>
+
+        <SubHead>Colour</SubHead>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap: 10, marginTop: 12 }}>
+          <Swatch c={NUST.blue}  name="NUST Blue"  hex="#00548E" main/>
+          <Swatch c={NUST.navy}  name="Navy"       hex="#01273E"/>
+          <Swatch c={NUST.gold}  name="Gold"       hex="#FBAF17"/>
+          <Swatch c={NUST.gray}  name="Gray"       hex="#8C8E90"/>
+          <Swatch c={NUST.maroon} name="Maroon"    hex="#800000"/>
+        </div>
+
+        <div style={{ marginTop: 20, display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap: 10 }}>
+          <Swatch c={NUST.bg}    name="Surface"    hex="#F6F8FB" tiny/>
+          <Swatch c={NUST.line}  name="Line"       hex="#E5E9EE" tiny/>
+          <Swatch c={NUST.ink}   name="Ink"        hex="#0F1B2A" tiny/>
+          <Swatch c={NUST.ok}    name="OK"         hex="#1B7F50" tiny/>
+          <Swatch c={NUST.bad}   name="Bad"        hex="#A11D1D" tiny/>
+        </div>
+
+        <SubHead style={{ marginTop: 28 }}>Spacing &amp; radii</SubHead>
+        <div style={{ display:'flex', gap: 18, alignItems:'flex-end', marginTop: 12 }}>
+          {[8,16,24,32,48].map(s => (
+            <div key={s} style={{ textAlign:'center', fontFamily: NUST.mono, fontSize: 11, color: NUST.ink3 }}>
+              <div style={{ width: s, height: s, background: primary, borderRadius: 4, marginBottom: 6 }}/>
+              {s}
+            </div>
+          ))}
+        </div>
+        <div style={{ display:'flex', gap: 18, alignItems:'flex-end', marginTop: 22 }}>
+          {[6,10,14,20,999].map(r => (
+            <div key={r} style={{ textAlign:'center', fontFamily: NUST.mono, fontSize: 11, color: NUST.ink3 }}>
+              <div style={{ width: 44, height: 44, background: NUST.line2, border: `1.5px solid ${NUST.line}`, borderRadius: r, marginBottom: 6 }}/>
+              {r === 999 ? 'pill' : r}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <SubHead>Type</SubHead>
+        <div style={{ marginTop: 12 }}>
+          <TypeRow label="Display · Georgia 700 / 56" style={{ fontFamily: NUST.serif, fontSize: 56, fontWeight: 700, lineHeight: 1, letterSpacing: -0.6 }}>
+            S³C
+          </TypeRow>
+          <TypeRow label="H1 · Georgia 700 / 32" style={{ fontFamily: NUST.serif, fontSize: 32, fontWeight: 700, letterSpacing: -0.3 }}>
+            Concerns, captured.
+          </TypeRow>
+          <TypeRow label="H2 · Georgia 700 / 22" style={{ fontFamily: NUST.serif, fontSize: 22, fontWeight: 700 }}>
+            Submit a request
+          </TypeRow>
+          <TypeRow label="Body · Inter 400 / 14" style={{ fontFamily: NUST.sans, fontSize: 14, fontWeight: 400, lineHeight: 1.6, color: NUST.ink2 }}>
+            S³C is the single point of contact for every NUST student. Submit appointments and documents from your phone; we'll route them.
+          </TypeRow>
+          <TypeRow label="Label · Inter 600 / 11 uppercase" style={{ fontFamily: NUST.sans, fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform:'uppercase', color: NUST.ink2 }}>
+            Available slots
+          </TypeRow>
+          <TypeRow label="Mono · JetBrains Mono / 12" style={{ fontFamily: NUST.mono, fontSize: 12, color: NUST.ink2 }}>
+            S3C-2487 · 1d 4h ago
+          </TypeRow>
+        </div>
+
+        <SubHead style={{ marginTop: 28 }}>Iconography</SubHead>
+        <div style={{ display:'flex', gap: 14, marginTop: 12, flexWrap:'wrap' }}>
+          {Object.entries(CAT_ICONS).map(([k, d]) => (
+            <div key={k} style={{ textAlign:'center', fontSize: 11, color: NUST.ink3 }}>
+              <div style={{ width: 44, height: 44, background:'#E6EFF5', borderRadius: 10,
+                            display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <Ico d={d} size={22} stroke={primary}/>
+              </div>
+              <div style={{ marginTop: 6 }}>{k}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SubHead({ children, style }) {
+  return <div style={{ fontSize: 11, fontWeight: 700, color: NUST.ink2, letterSpacing: 0.8, textTransform:'uppercase', ...style }}>{children}</div>;
+}
+
+function Swatch({ c, name, hex, main, tiny }) {
+  return (
+    <div>
+      <div style={{ width:'100%', aspectRatio: main ? '1.3 / 1' : tiny ? '2.4 / 1' : '1.6 / 1', background: c, borderRadius: 10, border: '1px solid rgba(0,0,0,0.06)' }}/>
+      <div style={{ marginTop: 6, fontSize: 12, fontWeight: 600, color: NUST.ink }}>{name}</div>
+      <div style={{ fontSize: 10.5, color: NUST.ink3, fontFamily: NUST.mono }}>{hex}</div>
+    </div>
+  );
+}
+
+function TypeRow({ label, style, children }) {
+  return (
+    <div style={{ marginBottom: 14, paddingBottom: 14, borderBottom: `1px solid ${NUST.line2}` }}>
+      <div style={{ fontSize: 10.5, color: NUST.ink3, fontFamily: NUST.mono, marginBottom: 4 }}>{label}</div>
+      <div style={{ color: NUST.ink, ...style }}>{children}</div>
+    </div>
+  );
+}
+
+// ── Components artboard ──────────────────────────────────────
+function ComponentsArtboard() {
+  return (
+    <div style={{ padding: 48, background: NUST.paper, height:'100%', boxSizing:'border-box', overflow:'auto', fontFamily: NUST.sans }}>
+      <div style={{ fontSize: 11, color: NUST.ink3, letterSpacing: 1.4, textTransform:'uppercase', fontWeight: 700 }}>Design system</div>
+      <h2 style={{ fontFamily: NUST.serif, fontSize: 32, fontWeight: 700, color: NUST.ink, margin: '4px 0 24px' }}>Components</h2>
+
+      <Group title="Buttons">
+        <Btn variant="primary">Primary action</Btn>
+        <Btn variant="secondary">Secondary</Btn>
+        <Btn variant="soft">Soft</Btn>
+        <Btn variant="ghost">Ghost</Btn>
+        <Btn variant="danger">Danger</Btn>
+        <Btn variant="gold">Highlight</Btn>
+        <Btn variant="primary" size="sm">Small</Btn>
+        <Btn variant="primary" size="lg">Large</Btn>
+      </Group>
+
+      <Group title="Chips & status">
+        <Chip tone="neutral">Neutral</Chip>
+        <Chip tone="blue">Blue</Chip>
+        <Chip tone="gold">Gold</Chip>
+        <Chip tone="ok">Resolved</Chip>
+        <Chip tone="warn">Due soon</Chip>
+        <Chip tone="bad">Escalated</Chip>
+        <SLABadge sla="green"/>
+        <SLABadge sla="amber"/>
+        <SLABadge sla="red"/>
+        <StageChip stage="Pending"/>
+        <StageChip stage="In Progress"/>
+        <StageChip stage="Escalated"/>
+        <StageChip stage="Resolved"/>
+      </Group>
+
+      <Group title="Forms">
+        <div style={{ width: 280 }}>
+          <Field label="NUST ID" value="cs-21-103"/>
+        </div>
+        <div style={{ width: 280 }}>
+          <Field label="Password" value="••••••••" type="password" right={<Ico d={ICO.eye} size={18} stroke={NUST.ink3}/>}/>
+        </div>
+        <div style={{ width: 280 }}>
+          <FormGroup label="Category">
+            <ChipRow options={['Academic','Finance','Hostel']} value="Academic" onChange={()=>{}}/>
+          </FormGroup>
+        </div>
+      </Group>
+
+      <Group title="Cards">
+        <div style={{ width: 320 }}>
+          <RequestCard r={NUST_REQUESTS[0]}/>
+        </div>
+        <div style={{ width: 220 }}>
+          <Card>
+            <Chip tone="gold">Qalam</Chip>
+            <div style={{ fontWeight: 700, fontSize: 14, color: NUST.ink, marginTop: 8 }}>Latest result</div>
+            <div style={{ fontSize: 12, color: NUST.ink2, marginTop: 4 }}>CS-370 Mid-term · A- · 87/100</div>
+          </Card>
+        </div>
+        <div style={{ width: 220 }}>
+          <Card>
+            <KV k="Owner" v="R. Jamil"/>
+            <div style={{ height: 8 }}/>
+            <KV k="School" v="SEECS"/>
+            <div style={{ height: 8 }}/>
+            <KV k="ETA" v="< 24h"/>
+          </Card>
+        </div>
+      </Group>
+    </div>
+  );
+}
+
+function Group({ title, children }) {
+  return (
+    <div style={{ marginBottom: 32 }}>
+      <div style={{ fontFamily: NUST.serif, fontWeight: 700, fontSize: 16, color: NUST.ink, marginBottom: 14 }}>{title}</div>
+      <div style={{ display:'flex', flexWrap:'wrap', gap: 12, alignItems:'center' }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
